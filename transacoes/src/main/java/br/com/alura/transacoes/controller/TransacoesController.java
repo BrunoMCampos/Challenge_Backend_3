@@ -34,7 +34,7 @@ public class TransacoesController {
     }
 
     @PostMapping("/formulario")
-    public String subirFormulario(@RequestParam("arquivo") MultipartFile arquivo, Model model) throws IOException {
+    public String uploadArquivo(@RequestParam("arquivo") MultipartFile arquivo, Model model) throws IOException {
         transacaoService.importar(arquivo, model);
         listarImportacoes(model);
         return "formulario";
