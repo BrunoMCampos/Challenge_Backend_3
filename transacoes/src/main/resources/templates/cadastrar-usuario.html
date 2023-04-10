@@ -16,13 +16,14 @@
     <body>
         <div class="container">
             <h1 class="fw-bold text-uppercase text-center">Cadastrar usuário</h1>
-            <form action="\cadastrar" method="post" >
+            <form action="/usuarios/cadastrar" method="post" th:object="${dadosCadastrarUsuario}">
                 <div class="mb-1">
                     <label for="nome" class="form-label">Nome</label>
                     <input
                         type="text"
                         class="form-control"
                         id="nome"
+                        th:field="*{nome}"
                         th:errorclass="is-invalid"
                     />
                     <div class="form-text">Insira o nome do usuario a ser cadastrado.</div>
@@ -35,6 +36,7 @@
                         class="form-control"
                         id="email"
                         th:errorclass="is-invalid"
+                        th:field="*{email}"
                     />
                     <div class="form-text">Insira o e-mail. O e-mail informado será utilizado para envio da senha de acesso.</div>
                     <div th:errors="*{email}" class="invalid-feedback">Erro</div>

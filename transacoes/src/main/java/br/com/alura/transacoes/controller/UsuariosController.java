@@ -13,31 +13,34 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/usuarios")
+@RequestMapping("usuarios")
 public class UsuariosController {
 
     @Autowired
     private UsuarioService usuarioService;
 
-    @GetMapping("/cadastrar")
-    public String formularioCadastroUsuarios(){
+    @GetMapping("cadastrar")
+    public String formularioCadastroUsuarios(DadosCadastrarUsuario dados){
         return "cadastrar-usuario";
     }
 
-    @PostMapping("/cadastrar")
-    public String cadastrarUsuario(@RequestBody @Valid DadosCadastrarUsuario dados, Model model, BindingResult result){
-        if(result.hasErrors()){
-            return "cadastrar";
-        }
-        return usuarioService.cadastrar(dados, model);
+    @PostMapping("cadastrar")
+    public String cadastrarUsuario(){
+        System.out.println("oi");
+        return "cadastrar-usuario";
+//        if(result.hasErrors()){
+//            System.out.println("Aqui");
+//            return "cadastrar-usuario";
+//        }
+//        return usuarioService.cadastrar(dados, model);
     }
 
-    @GetMapping("/listar")
+    @GetMapping("listar")
     public String listarUsuariosCadastrados(){
         return "listar-usuarios";
     }
 
-    @GetMapping("/login")
+    @GetMapping("login")
     public String formularioLogin(){
         return "login";
     }
