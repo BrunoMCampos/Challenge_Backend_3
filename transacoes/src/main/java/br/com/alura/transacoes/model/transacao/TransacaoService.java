@@ -2,7 +2,10 @@ package br.com.alura.transacoes.model.transacao;
 
 import br.com.alura.transacoes.model.importacao.Importacao;
 import br.com.alura.transacoes.model.importacao.ImportacaoRepository;
+import br.com.alura.transacoes.model.usuario.Usuario;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,7 +46,9 @@ public class TransacaoService {
         List<Transacao> transacoesValidas = validarTransacoes(transacoes, model);
 
         if (transacoesValidas != null) {
-            importacaoRepository.save(new Importacao(this.dataPrimeiraTransacao, LocalDateTime.now()));
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Usuario usuario = (Usuario) auth.getPrincipal();
+            importacaoRepository.save(new Importacao(this.dataPrimeiraTransacao, LocalDateTime.now(), usuario));
 
             transacoesValidas.forEach(transacao -> {
                 transacaoRepository.save(transacao);
@@ -56,7 +61,6 @@ public class TransacaoService {
                 mensagem = transacoesValidas.size() + " transação cadastrada com sucesso!";
             }
             model.addAttribute("mensagemCadastro", mensagem);
-            System.out.println("sucesso");
         }
     }
 
@@ -69,7 +73,7 @@ public class TransacaoService {
         this.dataPrimeiraTransacao = transacoes.get(0).getDataHoraTransacao().toLocalDate(); // Ler primeira transação e determinar a data aceita para este arquivo
         List<Transacao> dataCadastrada = transacaoRepository.findByData(dataPrimeiraTransacao); // Com base na data verificar se as transações deste dia já não foram registradas
         if (dataCadastrada != null && dataCadastrada.size() > 0) {
-            model.addAttribute("mensagemErro", "As transações desta data já foram realizadas!");
+            model.addAttribute("mensagemErro", "As transações desta data já foram importadas!");
             return null;
         }
 
@@ -119,4 +123,7 @@ public class TransacaoService {
         return false;
     }
 
+    public List<DadosListarTransacoes> listarPorData(LocalDate dataTransacoes) {
+        return transacaoRepository.findByData(dataTransacoes).stream().map(DadosListarTransacoes::new).toList();
+    }
 }

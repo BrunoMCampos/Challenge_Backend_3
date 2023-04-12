@@ -14,9 +14,16 @@
         />
     </head>
     <body>
+        <nav th:replace="~{fragmentos/navbar :: nav}"></nav>
         <div class="container">
-            <h1 class="fw-bold text-uppercase text-center">Cadastrar usuário</h1>
-            <form action="/usuarios/cadastrar" method="post" th:object="${dadosCadastrarUsuario}">
+            <h1 class="fw-bold text-uppercase text-center">
+                Cadastrar usuário
+            </h1>
+            <form
+                th:action="@{/usuarios/cadastrar}"
+                method="post"
+                th:object="${dadosCadastrarUsuario}"
+            >
                 <div class="mb-1">
                     <label for="nome" class="form-label">Nome</label>
                     <input
@@ -26,7 +33,9 @@
                         th:field="*{nome}"
                         th:errorclass="is-invalid"
                     />
-                    <div class="form-text">Insira o nome do usuario a ser cadastrado.</div>
+                    <div class="form-text">
+                        Insira o nome do usuario a ser cadastrado.
+                    </div>
                     <div th:errors="*{nome}" class="invalid-feedback">Erro</div>
                 </div>
                 <div class="mb-3">
@@ -38,8 +47,13 @@
                         th:errorclass="is-invalid"
                         th:field="*{email}"
                     />
-                    <div class="form-text">Insira o e-mail. O e-mail informado será utilizado para envio da senha de acesso.</div>
-                    <div th:errors="*{email}" class="invalid-feedback">Erro</div>
+                    <div class="form-text">
+                        Insira o e-mail. O e-mail informado será utilizado para
+                        envio da senha de acesso.
+                    </div>
+                    <div th:errors="*{email}" class="invalid-feedback">
+                        Erro
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Cadastrar</button>
             </form>

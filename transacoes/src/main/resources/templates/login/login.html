@@ -16,11 +16,18 @@
     <body>
         <div class="container">
             <h1 class="fw-bold text-uppercase text-center">Login</h1>
-            <form action="" method="post">
+            <form th:action="@{/usuarios/login}" method="post">
                 <div>
                     <label for="email" class="form-label">Email</label>
-                    <input type="text" id="email" class="form-control" />
-                    <div class="form-text">Entre com o email utilizado para o cadastro</div>
+                    <input
+                        type="text"
+                        id="email"
+                        class="form-control"
+                        name="email"
+                    />
+                    <div class="form-text">
+                        Entre com o email utilizado para o cadastro
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="senha" class="form-label">Senha</label>
@@ -30,9 +37,25 @@
                         id="senha"
                         class="form-control"
                     />
-                    <div class="form-text">Entre com a senha fornecida por e-mail.</div>
+                    <div class="form-text">
+                        Entre com a senha fornecida por e-mail.
+                    </div>
+
                 </div>
-                <button type="submit" class="btn btn-primary">Login</button>
+                <div class="d-flex align-items-center">
+                    <button type="submit" class="btn btn-primary me-2">Login</button>
+                    <div th:if="${param.error}">
+                        <small class="text-danger">
+                            Nome de usuário e Senha inválidos
+                        </small>
+                    </div>
+                    <div th:if="${param.logout}">
+                        <small class="text-success">
+                            Loggout efetuado com sucesso
+                        </small>
+                    </div>
+                </div>
+
             </form>
         </div>
 

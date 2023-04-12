@@ -17,13 +17,14 @@
     />
 </head>
 <body>
+<nav th:replace="~{fragmentos/navbar :: nav}"></nav>
 <div class="container">
     <h1 class="fw-bold text-uppercase text-center">
         Importar transações
     </h1>
     <form
-            action="/formulario"
-            method="post"
+            th:action="@{/transacoes/formulario}"
+            th:method="post"
             class="needs-validation"
             enctype="multipart/form-data"
             novalidate
@@ -39,8 +40,12 @@
                     aria-labelledby="instrucaoSelecionarArquivo"
                     required
             />
-            <span th:text="${mensagemErro}" class="invalid-feedback" >teste</span>
-            <small th:text="${mensagemCadastro}" class="text-success" >teste</small>
+            <span th:text="${mensagemErro}" class="invalid-feedback"
+            >teste</span
+            >
+            <small th:text="${mensagemCadastro}" class="text-success"
+            >teste</small
+            >
             <div class="form-text" id="instrucaoSelecionarArquivo">
                 Selecione o arquivo para realizar o upload.
             </div>
@@ -52,16 +57,34 @@
     </h2>
     <table class="table table-striped">
         <thead>
-            <tr>
-                <th class="fw-bold text-uppercase">Data transações</th>
-                <th class="fw-bold text-uppercase">Data importação</th>
-            </tr>
+        <tr>
+            <th class="fw-bold text-uppercase">Data transações</th>
+            <th class="fw-bold text-uppercase">Data importação</th>
+            <th class="fw-bold text-uppercase">Upload por</th>
+            <th class="fw-bold text-uppercase">Opções</th>
+        </tr>
         </thead>
         <tbody th:each="importacao : ${importacoes}">
-            <tr>
-                <td th:text="${#temporals.format(importacao.dataTransacoes, 'dd/MM/yyyy')}">10/11/2023</td>
-                <td th:text="${#temporals.format(importacao.dataUpload, 'dd/MM/yyyy - HH:mm:ss')}">05/04/2023 - 16:22:19</td>
-            </tr>
+        <tr>
+            <td
+                    th:text="${#temporals.format(importacao.dataTransacoes, 'dd/MM/yyyy')}"
+            >
+                10/11/2023
+            </td>
+            <td
+                    th:text="${#temporals.format(importacao.dataUpload, 'dd/MM/yyyy - HH:mm:ss')}"
+            >
+                05/04/2023 - 16:22:19
+            </td>
+            <td th:text="${importacao.nomeUsuario}">
+                Usuario X
+            </td>
+            <td>
+                <a th:href="@{/transacoes/detalhes/{data}(data=${importacao.dataTransacoes})}">
+                    <button type="button" class="btn btn-primary">Detalhes</button>
+                </a>
+            </td>
+        </tr>
         </tbody>
     </table>
 </div>
