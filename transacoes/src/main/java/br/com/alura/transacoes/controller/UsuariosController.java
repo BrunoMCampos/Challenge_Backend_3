@@ -52,6 +52,7 @@ public class UsuariosController {
     }
 
     @PostMapping("cadastrar")
+    @Transactional
     public String cadastrarUsuario(@Valid DadosCadastrarUsuario dados, BindingResult result, Model model) {
         if (result.hasErrors()) {
             return "usuarios/cadastrar-usuario";

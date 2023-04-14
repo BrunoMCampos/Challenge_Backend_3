@@ -36,6 +36,15 @@
                     >
                 </li>
                 <li class="nav-item">
+                    <a
+                            th:classappend="${telaAtiva == 'analise' ? 'active' : ''}"
+                            class="nav-link"
+                            aria-current="page"
+                            th:href="@{/transacoes/analise}"
+                    >Análise de Transações</a
+                    >
+                </li>
+                <li class="nav-item">
                     <form th:action="@{/logout}" method="post">
                         <button class="nav-link" type="submit">Sair</button>
                     </form>

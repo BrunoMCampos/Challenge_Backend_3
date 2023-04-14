@@ -29,8 +29,9 @@ public class TransacaoService {
     private LocalDate dataPrimeiraTransacao;
 
     private static List<Transacao> extrairTransacoes(MultipartFile arquivo) throws IOException {
-        Scanner scanner = new Scanner(arquivo.getInputStream());
         List<Transacao> transacoes = new ArrayList<>();
+
+        Scanner scanner = new Scanner(arquivo.getInputStream());
 
         while (scanner.hasNextLine()) {
             String linha = scanner.nextLine();
@@ -38,30 +39,34 @@ public class TransacaoService {
             Transacao transacao = new Transacao(valoresLinha);
             transacoes.add(transacao);
         }
+
         return transacoes;
     }
 
-    public void importar(MultipartFile arquivo, Model model) throws IOException {
-        List<Transacao> transacoes = extrairTransacoes(arquivo);
-        List<Transacao> transacoesValidas = validarTransacoes(transacoes, model);
+    public void importar(List<MultipartFile> arquivos, Model model) throws IOException {
+        int transacoesRealizadas = 0;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Usuario usuario = (Usuario) auth.getPrincipal();
+        String mensagem;
 
-        if (transacoesValidas != null) {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            Usuario usuario = (Usuario) auth.getPrincipal();
-            importacaoRepository.save(new Importacao(this.dataPrimeiraTransacao, LocalDateTime.now(), usuario));
+        for (MultipartFile arquivo : arquivos) {
+            List<Transacao> transacoes = extrairTransacoes(arquivo);
+            List<Transacao> transacoesValidas = validarTransacoes(transacoes, model);
 
-            transacoesValidas.forEach(transacao -> {
-                transacaoRepository.save(transacao);
-            });
-
-            String mensagem;
-            if (transacoesValidas.size() > 1) {
-                mensagem = transacoesValidas.size() + " transações cadastradas com sucesso!";
-            } else {
-                mensagem = transacoesValidas.size() + " transação cadastrada com sucesso!";
+            if (transacoesValidas != null) {
+                importacaoRepository.save(new Importacao(this.dataPrimeiraTransacao, LocalDateTime.now(), usuario));
+                transacaoRepository.saveAll(transacoesValidas);
+                transacoesRealizadas += transacoesValidas.size();
             }
-            model.addAttribute("mensagemCadastro", mensagem);
         }
+        if (transacoesRealizadas > 1) {
+            mensagem = transacoesRealizadas + " transações cadastradas com sucesso!";
+        } else if(transacoesRealizadas == 1) {
+            mensagem = transacoesRealizadas + " transação cadastrada com sucesso!";
+        } else {
+            mensagem = null;
+        }
+        model.addAttribute("mensagemCadastro", mensagem);
     }
 
     private List<Transacao> validarTransacoes(List<Transacao> transacoes, Model model) {
@@ -115,9 +120,7 @@ public class TransacaoService {
     }
 
     private boolean datasSaoIguais(LocalDateTime dataTransacao) {
-        if (dataTransacao.getYear() == this.dataPrimeiraTransacao.getYear() &&
-                dataTransacao.getMonthValue() == this.dataPrimeiraTransacao.getMonthValue() &&
-                dataTransacao.getDayOfMonth() == this.dataPrimeiraTransacao.getDayOfMonth()) {
+        if (dataTransacao.getYear() == this.dataPrimeiraTransacao.getYear() && dataTransacao.getMonthValue() == this.dataPrimeiraTransacao.getMonthValue() && dataTransacao.getDayOfMonth() == this.dataPrimeiraTransacao.getDayOfMonth()) {
             return true;
         }
         return false;
@@ -125,5 +128,33 @@ public class TransacaoService {
 
     public List<DadosListarTransacoes> listarPorData(LocalDate dataTransacoes) {
         return transacaoRepository.findByData(dataTransacoes).stream().map(DadosListarTransacoes::new).toList();
+    }
+
+    public List<Integer> listarAnosComImportacoes() {
+        return transacaoRepository.listarAnos();
+    }
+
+    public List<Transacao> listarTransacoesSuspeitas(Integer ano, Integer mes) {
+        return transacaoRepository.listarTransacoesSuspeitasNaData(ano, mes);
+    }
+
+    public List<DadosContasSuspeitas> listarContasSuspeitas(Integer ano, Integer mes) {
+        List<DadosContasSuspeitas> contasDestino = transacaoRepository.listarContasSuspeitasNaDataPorDestino(ano, mes);
+        List<DadosContasSuspeitas> contasOrigem = transacaoRepository.listarContasSuspeitasNaDataPorOrigem(ano, mes);
+
+        List<DadosContasSuspeitas> contasSuspeitas = new ArrayList<>(contasDestino.stream().toList());
+        contasSuspeitas.addAll(contasOrigem.stream().toList());
+
+        return contasSuspeitas;
+    }
+
+    public List<DadosAgenciasSuspeitas> listarAgenciasSuspeitas(Integer ano, Integer mes) {
+        List<DadosAgenciasSuspeitas> agenciasDestino = transacaoRepository.listarAgenciasSuspeitasNaDataPorDestino(ano, mes);
+        List<DadosAgenciasSuspeitas> agenciasOrigem = transacaoRepository.listarAgenciasSuspeitasNaDataPorOrigem(ano, mes);
+
+        List<DadosAgenciasSuspeitas> agenciasSuspeitas = new ArrayList<>(agenciasOrigem.stream().toList());
+        agenciasSuspeitas.addAll(agenciasDestino.stream().toList());
+
+        return agenciasSuspeitas;
     }
 }
