@@ -64,13 +64,74 @@ Para o controle das transações criei uma entidade - ```Transacao``` - e para o
 ---
 
 ### 📆 Semana 2
+Nesta segunda semana as tarefas foram focadas em pontos que são muito exigidos, sejam em aplicações MVC ou APIs REST, que são os de segurança e autenticação. Fomos orientados a criar o CRUD de usuários, assim como as telas de login e de cadastro e também tivemos que alterar nosso banco de dados para adicionar um campo para registrar os usuários responsáveis pelo upload de cada uma das importações realizadas na aplicação. 
+Uma série de regras de negócio foi exigida para a criação do CRUD de usuários:
 
+```
+  Regras de negócio:
+  
+    Apenas 2 informações serão necessárias no cadastro: Nome e Email, sendo ambas obrigatórias
+    A aplicação deve gerar uma senha aleatória para o usuário, composta de 6 números;
+    A senha deverá ser enviada para o email do usuário sendo cadastrado;
+    A senha não deve ser armazenada no banco de dados em texto aberto, devendo ser salvo um hash dela, gerado pelo algoritmo BCrypt;
+    A aplicação não deve permitir o cadastro de um usuário com o email de outro usuário já cadastrado, devendo exibir uma mensagem de erro caso essa situação ocorra;
+    A aplicação deve ter um usuário padrão previamente cadastrado, com nome: Admin, email: admin@email.com.br e senha: 123999;
+    O usuário padrão não pode ser editado e nem excluído da aplicação, tampouco deve ser exibido na lista de usuários cadastrados;
+    Qualquer usuário tem permissão para listar, cadastrar, alterar e excluir outros usuários;
+    Um usuário não pode excluir ele próprio da aplicação.
+```
+
+Com usuários criados também tivemos que realizar a alteração da exclusão padrão para uma exclusão lógica de usuários do banco de dados e também criar uma tela para exibir detalhes das importações, mostrando todas as transações que foram registradas dentro daquele arquivo
+
+#### 🔨 Forma de elaboração
+Para realizar o login utilizei a seguinte tela, com auxilio do ```Spring Security``` para implementação de seguranã e também de ```Thymeleaf``` para integração do HTML com os controllers como já vinha fazendo:
+![image](https://user-images.githubusercontent.com/100006703/231603353-5a44d981-7487-4420-8a78-fbed3738f171.png)
+
+Caso algum erro seja encontrado com as informações de login a seguinte tela é mostrada:
+![image](https://user-images.githubusercontent.com/100006703/231603414-65b03882-9195-4fff-a569-59fa85016c8c.png)
+
+A tela utilizada para importação de transações ganhou duas novas colunas dentro da tabela de exibição de importações realizadas, uma referente ao usuário que realizou o upload do arquivo e outra para permitir o detalhamento das informações:
+![image](https://user-images.githubusercontent.com/100006703/231603668-1bd099f1-dde9-4fbb-9361-5d24294789dc.png)
+
+Todas as telas ganharam também um navbar para permitir que sejam acessados todos os endpoints da aplicação sem maiores problemas:
+![image](https://user-images.githubusercontent.com/100006703/231603734-10a7cd2f-d149-4282-9e96-eee045b08c59.png)
+
+Ao se clicar no botão de ```Detalhar``` em um dos itens da tabela se é exibido todas as transações do banco de dados:
+![image](https://user-images.githubusercontent.com/100006703/231603856-4a9a2346-2718-4889-ad7e-5ca8d6649af3.png)
+
+Para a funcionalidade da imagem acima utilizei a data das transações como ```PathVariable``` e a utilizei em meu ```Repository``` para pesquisar todas as transações referentes, considerando que um arquivo só poderá realizar uploads de transações de uma mesma data e que, uma vez que uma data tenha o seu arquivo CSV cadastrado ela não pode mais ser utilizada.
+
+Para os usuários utilizei a tela abaixo para a listagem, sendo acessada via navbar:
+![image](https://user-images.githubusercontent.com/100006703/231604254-97220232-cec9-4b70-9179-3e3a7a968d76.png)
+
+Permitindo o cadastro de novos usuarios pelo botão ```Novo```
+![image](https://user-images.githubusercontent.com/100006703/231604307-b9f4e2f7-4df6-48ab-b704-992932271697.png)
+![image](https://user-images.githubusercontent.com/100006703/231604327-222e7e8b-ac54-4ef9-9ed3-c8e07d7c56a0.png)
+![image](https://user-images.githubusercontent.com/100006703/231604557-a49185c8-ef6c-49fa-8879-9ef43ced5f89.png)
+
+Uma tela semelhante é exibida ao se selecionar a edição de um dos usuários:
+![image](https://user-images.githubusercontent.com/100006703/231604697-9ca9be55-11aa-44db-9ac4-a32cd7f8aa43.png)
+
+E por fim utilizei um modal junto ao botão de excluir para permitir uma confirmação do usuário para exclusão lógica do usuário em questão:
+![image](https://user-images.githubusercontent.com/100006703/231604795-142b2665-7865-4798-a2b6-1e1bffcb23e3.png)
+
+Todas as validações foram feitas com ```BeanValidation``` e o usuário ```admin``` foi inserido no banco de dados previamente, com senha criptografada e deixado de lado nas listagens de usuário por meio de edição dos repositorys com a anotação ```@Query```.
+![image](https://user-images.githubusercontent.com/100006703/231605032-fb3e8940-6c47-4fa2-9fb2-ed537fe2b99f.png)
+![image](https://user-images.githubusercontent.com/100006703/231605072-72873220-65b7-4e61-b384-892f2bf56e2b.png)
+
+As alterações no banco de dados foram feitas por meio do Flyway:
+![image](https://user-images.githubusercontent.com/100006703/231605147-515d264a-3b6a-4ee4-8b06-82f06c45f1ba.png)
+![image](https://user-images.githubusercontent.com/100006703/231605173-56759243-4202-4c92-bae7-fe3b98ad3299.png)
+
+Como meus dados de login seriam diferentes do padrão do Spring Security utilizei meu próprio esquema de tabelas e classes necessárias.
 
 ---
 
 #### 📜 Tarefas da Semana 2
-- [x] 
-
+- [x] Criar o CRUD de usuários;
+- [x] Implementar a autenticação;
+- [x] Criar uma tela para permitir o detalhamento de uma importação;
+- [x] Registrar quem realizou a importação, alterando o banco de dados para guardar esta informação.
 ---
 
 ### 📆 Semanas 3 e 4
