@@ -16,7 +16,6 @@ public class AnaliseTransacaoService {
         carregarTransacoesSuspeitas(model, ano, mes);
         carregarContasSuspeitas(model, ano, mes);
         carregarAgenciasSuspeitas(model, ano, mes);
-
     }
 
     private void carregarAgenciasSuspeitas(Model model, Integer ano, Integer mes) {
@@ -26,7 +25,7 @@ public class AnaliseTransacaoService {
 
     private void carregarContasSuspeitas(Model model, Integer ano, Integer mes) {
         List<DadosContasSuspeitas> contasSuspeitas = transacaoService.listarContasSuspeitas(ano, mes);// 1.000.000 - Entrada OU Saída
-        model.addAttribute("contasSuspeitas",contasSuspeitas);
+        model.addAttribute("contasSuspeitas", contasSuspeitas);
     }
 
     private void carregarTransacoesSuspeitas(Model model, Integer ano, Integer mes) {

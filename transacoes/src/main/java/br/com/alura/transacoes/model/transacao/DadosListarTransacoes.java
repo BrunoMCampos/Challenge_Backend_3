@@ -13,12 +13,12 @@ public record DadosListarTransacoes(
 ) {
     public DadosListarTransacoes(Transacao transacao){
         this(
-                transacao.getBancoOrigem(),
-                transacao.getAgenciaOrigem(),
-                transacao.getContaOrigem(),
-                transacao.getBancoDestino(),
-                transacao.getAgenciaDestino(),
-                transacao.getContaDestino(),
+                transacao.getContaOrigem().getBanco(),
+                transacao.getContaOrigem().getAgencia(),
+                transacao.getContaOrigem().getConta(),
+                transacao.getContaDestino().getBanco(),
+                transacao.getContaDestino().getAgencia(),
+                transacao.getContaDestino().getConta(),
                 transacao.getValorTransacao()
         );
     }

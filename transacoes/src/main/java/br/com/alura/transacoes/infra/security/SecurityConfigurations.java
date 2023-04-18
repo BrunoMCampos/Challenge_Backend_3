@@ -33,7 +33,7 @@ public class SecurityConfigurations {
                 .defaultSuccessUrl("/transacoes/formulario",true)
                 .passwordParameter("senha").usernameParameter("email")
                 .and().logout().logoutSuccessUrl("/usuarios/login").permitAll()
-                .and().build();
+                .and().httpBasic().disable().build();
     }
 
     @Bean

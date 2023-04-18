@@ -9,4 +9,13 @@ public record DadosContasSuspeitas(
         BigDecimal valorMovimentado,
         String tipoMovimentacao
 ) {
+    public DadosContasSuspeitas(Conta conta, BigDecimal valorMovimentado, String tipoMovimentacao){
+        this(
+                conta.getBanco(),
+                conta.getAgencia(),
+                conta.getConta(),
+                valorMovimentado,
+                tipoMovimentacao
+        );
+    }
 }
