@@ -1,10 +1,7 @@
 package br.com.alura.transacoes.model.transacao;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,6 +11,7 @@ import java.time.LocalTime;
 @Entity(name = "Transacao")
 @Table(name = "transacoes")
 @Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
@@ -49,7 +47,9 @@ public class Transacao {
         this.contaDestino.setBanco(valoresLinha[3]);
         this.contaDestino.setAgencia(valoresLinha[4]);
         this.contaDestino.setConta(valoresLinha[5]);
-        this.valorTransacao = new BigDecimal(valoresLinha[6]);
+        if(valoresLinha[6].length() > 0){
+            this.valorTransacao = new BigDecimal(valoresLinha[6]);
+        }
         this.dataHoraTransacao = extrairDataTexto(valoresLinha[7]);
     }
 
@@ -62,9 +62,13 @@ public class Transacao {
 
     private LocalDateTime extrairDataTexto(String s) {
         String[] dataHora = s.split("T");
-        LocalDate data = LocalDate.parse(dataHora[0]);
-        LocalTime hora = LocalTime.parse(dataHora[1]);
-        return LocalDateTime.of(data, hora);
+        if(!dataHora[0].isBlank() && !dataHora[1].isBlank()){
+            LocalDate data = LocalDate.parse(dataHora[0]);
+            LocalTime hora = LocalTime.parse(dataHora[1]);
+            return LocalDateTime.of(data, hora);
+        } else {
+            return null;
+        }
     }
 
     @Override

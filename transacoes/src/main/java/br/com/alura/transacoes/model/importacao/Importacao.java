@@ -23,7 +23,7 @@ public class Importacao {
     private LocalDate dataTransacoes;
     private LocalDateTime dataUpload;
 
-    @JoinColumn(name = "fk_id_usuario")
+    @JoinColumn(name = "fk_email_usuario")
     @ManyToOne
     private Usuario usuarioUpload;
 

@@ -10,7 +10,7 @@
         Alterar usuário
     </h1>
     <form
-            th:action="@{/usuarios/alterar/{id}(id=${id})}"
+            th:action="@{/usuarios/alterar/{email}(email=${email})}"
             th:method="put"
             th:object="${dadosAlterarUsuario}"
     >
@@ -24,7 +24,7 @@
                     th:errorclass="is-invalid"
             />
             <div class="form-text">
-                Insira o nome do usuario a ser cadastrado.
+                Insira o nome do usuario a ser alterado.
             </div>
             <div th:errors="*{nome}" class="invalid-feedback">Erro</div>
         </div>
@@ -34,15 +34,11 @@
                     type="email"
                     class="form-control"
                     id="email"
-                    th:errorclass="is-invalid"
-                    th:field="*{email}"
+                    disabled
+                    th:value="${email}"
             />
             <div class="form-text">
-                Insira o e-mail. O e-mail informado será utilizado para
-                envio da senha de acesso.
-            </div>
-            <div th:errors="*{email}" class="invalid-feedback">
-                Erro
+                O e-mail de acesos não pode ser alterado.
             </div>
         </div>
         <button type="submit" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal">Salvar</button>

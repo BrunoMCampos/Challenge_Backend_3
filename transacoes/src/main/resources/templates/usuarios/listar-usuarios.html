@@ -18,7 +18,6 @@
     <table class="table table-striped">
         <thead class="border-bottom border-black">
         <tr>
-            <th>Id</th>
             <th>Nome</th>
             <th>Email</th>
             <th>Opções</th>
@@ -26,11 +25,10 @@
         </thead>
         <tbody th:each="usuario : ${usuarios}">
         <tr>
-            <td th:text="${usuario.id}">Id</td>
             <td th:text="${usuario.nome}">Nome do Usuário</td>
             <td th:text="${usuario.email}">E-mail do usuário</td>
             <td class="d-flex">
-                <form th:action="@{/usuarios/alterar/{id}(id=${usuario.id})}" method="get" class="me-1">
+                <form th:action="@{/usuarios/alterar/{email}(email=${usuario.email})}" method="get" class="me-1">
                     <button type="submit" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal">
                         Editar
                     </button>
@@ -54,7 +52,7 @@
                                 Deseja realmente excluir o usuáro selecionado?
                             </div>
                             <div class="modal-footer">
-                                <form th:action="@{/usuarios/remover/{id}(id=${usuario.id})}" th:method="delete">
+                                <form th:action="@{/usuarios/remover/{email}(email=${usuario.email})}" th:method="delete">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar
                                     </button>
                                     <button type="submit" class="btn btn-primary">Confirmar</button>

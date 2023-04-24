@@ -7,190 +7,110 @@ import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.time.Month;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Random;
 
 public class Main {
-    public static List<Conta> contas = new ArrayList<>();
+    public static List<Conta> contas = ContasBuilder.getContasPadrao();
 
     public static String formatoArquivo;
-    public static String periodoRelatorio;
+
+    public static LocalDate comeco;
+    public static LocalDate fim;
+
     public static String nomeArquivo;
-
-    public static int dia = 1;
-    public static int mes = 1;
-    public static int ano;
-
-    public static File pastaAno;
-    public static File pastaMes;
+    public static boolean sobrepor;
 
     public static int limiteDeTransacoesPorArquivo;
 
-    public static Scanner scanner = new Scanner(System.in);
-
-    public static boolean sobrepor;
+    private static File pastaAno;
+    private static final List<String> pastasMes = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
-        System.out.println("Bem vindo ao gerador de relatórios!");
-        gerarContas();
+        System.out.println("Bem vindo ao gerador de relatórios!".toUpperCase());
 
-        decidindoFormatoArquivo();
+        formatoArquivo = decidirFormatoArquivo();
 
-        decidindoPeriodo();
-        decidindoDiaMesAno();
-        decidindoQuantidadeLimiteDeTransacoesPorArquivo();
+        decidirPeriodo();
 
+        limiteDeTransacoesPorArquivo = decidirLimiteTransacoesPorArquivo();
+
+        sobrepor = verificarSobrepor();
         verificarECriarPastas();
 
+        System.out.println("Gerando arquivo ".toUpperCase() + formatoArquivo.toUpperCase());
         gerarRelatorio();
     }
 
-    private static void decidindoQuantidadeLimiteDeTransacoesPorArquivo() {
-        System.out.println("Cada arquivo gerado tem um número aleatório de transações com um limite definido como padrão para até 1.000 transações.");
-        System.out.println("Caso queira, você pode definir um novo limite de transações para ser utilizado, dentro do máximo de 10.000 transações e mínimo de 1 transação.");
-        System.out.println("Caso um valor inválido seja digitado será utilizado o valor default de 1.000 transações para realizar a geração do relatório.");
-        System.out.println("Defina um número limite de transações dentro de cada arquivo [Default - 1.000]");
-        limiteDeTransacoesPorArquivo = scanner.nextInt();
-        if (limiteDeTransacoesPorArquivo < 1 || limiteDeTransacoesPorArquivo > 10000) {
-            System.out.println("Limite Default de 1.000 transações definido para utilização");
-            limiteDeTransacoesPorArquivo = 1000;
-        } else {
-            System.out.println("Limite de " + limiteDeTransacoesPorArquivo + " transações definido para utilização");
-        }
+    private static String decidirFormatoArquivo() {
+        return MensagensBuilder.exibirMensagem("Deseja gerar um relatório em formato CSV ou XML?", List.of("CSV", "XML")).toLowerCase();
     }
 
-    private static void decidindoDiaMesAno() {
-        decidindoAno();
-        if (!periodoRelatorio.equalsIgnoreCase("ANUAL")) {
-            decidindoMes();
-            if (!periodoRelatorio.equalsIgnoreCase("MENSAL")) {
-                decidindoDia();
-            }
-        }
+    private static int decidirLimiteTransacoesPorArquivo() {
+        return MensagensBuilder.exibirMensagem("Defina um número limite de transações dentro de cada arquivo", 1, 10000, 1000);
     }
 
-    private static void decidindoDia() {
+    private static int decidindoAno() {
+        return MensagensBuilder.exibirMensagem("Entre com o ano desejado para o relatório, apenas com 4 números.", 1000, 9999, 2023);
+    }
+
+    private static int decidindoMes() {
+        return MensagensBuilder.exibirMensagem("Entre com o número referente ao mês desejado para o relatório.", 1, 12, 1);
+    }
+
+    private static int decidindoDia() {
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.YEAR, ano);
-        calendar.set(Calendar.MONTH, mes);
-        int primeiroDiaDoMes = calendar.getMinimum(Calendar.DAY_OF_MONTH);
-        int ultimoDiaDoMes = calendar.getMaximum(Calendar.DAY_OF_MONTH);
-        System.out.println("Entre com o dia desejado para o relatório [" + primeiroDiaDoMes + " a " + ultimoDiaDoMes + "]");
-        dia = scanner.nextInt();
-        while (dia > ultimoDiaDoMes || dia < primeiroDiaDoMes) {
-            System.out.println("Valor selecionado inválido, favor digitar os números referentes ao dia do mês desejado [" + primeiroDiaDoMes + " a " + ultimoDiaDoMes + "]");
-            System.out.println("Entre com o dia desejado para o relatório [" + primeiroDiaDoMes + " a " + ultimoDiaDoMes + "]");
-            dia = scanner.nextInt();
+        calendar.set(Calendar.MONTH, comeco.getMonthValue() - 1);
+        int primeiroDiaDoMes = calendar.getActualMinimum(Calendar.DAY_OF_MONTH);
+        int ultimoDiaDoMes = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+        return MensagensBuilder.exibirMensagem("Entre com o dia desejado para o relatório.", primeiroDiaDoMes, ultimoDiaDoMes, 10);
+    }
+
+    private static void decidirPeriodo() {
+        String periodo = MensagensBuilder.exibirMensagem("Deseja gerar o relatório para o dia, mês ou ano?", List.of("DIA", "MÊS", "ANO"));
+
+        int ano = decidindoAno();
+
+        if (periodo.equalsIgnoreCase("ano")) {
+            comeco = LocalDate.of(ano, Month.JANUARY, 1);
+            fim = LocalDate.of(ano, Month.JANUARY, 1).plusYears(1);
         }
-    }
 
-    private static void decidindoMes() {
-        System.out.println("Entre com o mês desejado para o relatório [1 a 12]");
-        mes = scanner.nextInt();
-        while (mes > 12 || mes < 1) {
-            System.out.println("Valor selecionado inválido, favor digitar o número referente ao mês desejado [1 a 12]");
-            System.out.println("Entre com o mês desejado para o relatório [1 A 12]");
-            mes = scanner.nextInt();
+        if (periodo.equalsIgnoreCase("mês")) {
+            int mes = decidindoMes();
+            comeco = LocalDate.of(ano, mes, 1);
+            fim = LocalDate.of(ano, mes, 1).plusMonths(1);
         }
-    }
 
-    private static void decidindoAno() {
-        System.out.println("Entre com o ano desejado para o relatório, apenas com 4 números [Ex.: 2023]");
-        ano = scanner.nextInt();
-        while (String.valueOf(ano).length() != 4) {
-            System.out.println("Valor selecionado inválido, favor digitar 4 números referentes ao ano desejado [Ex.: 2023]");
-            System.out.println("Entre com o ano desejado para o relatório, apenas com 4 números [Ex.: 2023]");
-            ano = scanner.nextInt();
+        if (periodo.equalsIgnoreCase("dia")) {
+            int mes = decidindoMes();
+            comeco = LocalDate.of(ano, mes, 1);
+            fim = LocalDate.of(ano, mes, 1).plusDays(1);
+            int dia = decidindoDia();
+            comeco = LocalDate.of(ano, mes, dia);
+            fim = LocalDate.of(ano, mes, dia).plusDays(1);
         }
-    }
-
-    private static void decidindoPeriodo() {
-        System.out.println("Deseja gerar o relatório diário, mensal ou anual? [1 - Diário ; 2 - Mensal ; 3 - Anual]");
-        int opcaoPeriodoRelatorio = scanner.nextInt();
-        do {
-            if (opcaoPeriodoRelatorio == 1) {
-                periodoRelatorio = "DIARIO";
-            } else if (opcaoPeriodoRelatorio == 2) {
-                periodoRelatorio = "MENSAL";
-            } else if (opcaoPeriodoRelatorio == 3) {
-                periodoRelatorio = "ANUAL";
-            } else {
-                System.out.println("Valor selecionado inválido, favor digitar apenas o número referente a opção desejada [1 - Diário ; 2 - Mensal ; 3 - Anual]");
-                System.out.println("Deseja gerar o relatório diário, mensal ou anual? [1 - Diário ; 2 - Mensal ; 3 - Anual]");
-                opcaoPeriodoRelatorio = scanner.nextInt();
-            }
-        } while (opcaoPeriodoRelatorio > 3 || opcaoPeriodoRelatorio < 1);
-    }
-
-    private static void decidindoFormatoArquivo() {
-        System.out.println("Deseja gerar um relatório em formato CSV ou XML? [Escolha o número correspondente]");
-        System.out.println("1 - CSV");
-        System.out.println("2 - XML");
-        int opcaoFormatoArquivo;
-        do {
-            opcaoFormatoArquivo = scanner.nextInt();
-            if (opcaoFormatoArquivo == 1) {
-                System.out.println("Opção escolhida: CSV");
-                formatoArquivo = "CSV";
-            } else if (opcaoFormatoArquivo == 2) {
-                System.out.println("Opção escolhida: XML");
-                formatoArquivo = "XML";
-            } else {
-                System.out.println("Valor selecionado inválido, favor digitar apenas o número referente a opção desejada [1 - CSV ; 2 - XML]");
-                System.out.println("Deseja gerar um relatório em formato CSV ou XML? [Escolha o número correspondente]");
-                System.out.println("1 - CSV");
-                System.out.println("2 - XML");
-            }
-        } while (opcaoFormatoArquivo > 2 || opcaoFormatoArquivo < 1);
-    }
-
-    private static void gerarContas() {
-        List<String> bancos = Arrays.asList("BANCO DO BRASIL", "BANCO BANRISUL", "BANCO ITAU", "BANCO SANTANDER", "NUBANK", "BANCO INTER", "BANCO BRADESCO", "CAIXA ECONOMICA FEDERAL");
-
-        bancos.forEach(banco -> {
-            for (int i = 1; i < 5001; i++) {
-                Conta conta = new Conta(String.format("%04d", i) + "-1", "0001", banco);
-                contas.add(conta);
-            }
-        });
     }
 
     private static void gerarRelatorio() throws IOException {
-        LocalDate comeco;
-        LocalDate fim;
-
-        if (periodoRelatorio.equalsIgnoreCase("ANUAL")) {
-            System.out.println("Gerando relatório para o ano de " + ano);
-            comeco = LocalDate.of(ano, 1, 1);
-            fim = LocalDate.of(ano + 1, 1, 1);
-        } else if (periodoRelatorio.equalsIgnoreCase("MENSAL")) {
-            System.out.println("Gerando relatório para o mês " + mes + "/" + ano);
-            comeco = LocalDate.of(ano, mes, 1);
-            fim = LocalDate.of(ano, mes + 1, 1);
-        } else{
-            System.out.println("Gerando relatório para dia " + dia + "/" + mes + "/" + ano);
-            comeco = LocalDate.of(ano, mes, dia);
-            fim = LocalDate.of(ano, mes, dia + 1);
-        }
-
-        gerarArquivos(comeco, fim);
-    }
-
-    private static void gerarArquivos(LocalDate comeco, LocalDate fim) throws IOException {
-        String path = pastaAno.getAbsolutePath();
-        if(mes > 0){
-            path = path.concat("/" + mes);
-        }
-        while(!comeco.equals(fim)){
-            nomeArquivo = path + "/Arquivo_" + formatoArquivo + "_" + comeco.format(DateTimeFormatter.ofPattern("yyyy.MM.dd")) + ".txt";
+        int contador = 0;
+        String mesAtual = pastasMes.get(contador);
+        while (!comeco.equals(fim)) {
+            if (!mesAtual.equalsIgnoreCase(String.valueOf(comeco.getMonthValue()))) {
+                contador++;
+                mesAtual = pastasMes.get(contador);
+            }
             OutputStream arquivo = new FileOutputStream(nomeArquivo);
             int numeroDeRegistros = new Random().nextInt(limiteDeTransacoesPorArquivo);
-            if(formatoArquivo.equalsIgnoreCase("csv")){
+            if (formatoArquivo.equalsIgnoreCase("csv")) {
                 for (int i = 0; i < numeroDeRegistros; i++) {
                     arquivo.write(gerarTransacao(comeco, i).toString().getBytes());
                     arquivo.write("\n".getBytes());
                 }
-            } else if(formatoArquivo.equalsIgnoreCase("xml")){
+            } else if (formatoArquivo.equalsIgnoreCase("xml")) {
                 arquivo.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n".getBytes());
                 arquivo.write("<transacoes>\n".getBytes());
                 for (int i = 0; i < numeroDeRegistros; i++) {
@@ -201,90 +121,124 @@ public class Main {
             }
             arquivo.close();
             comeco = comeco.plusDays(1);
+            nomeArquivo = pastaAno.getAbsolutePath() + "/" + mesAtual + "/" + comeco.getDayOfMonth() + "." + formatoArquivo;
         }
     }
 
     private static void verificarECriarPastas() {
-        verificarSobrepor();
+        pastaAno = new File(new File("").getAbsolutePath() + "/" + comeco.getYear());
 
-        if (periodoRelatorio.equalsIgnoreCase("MENSAL") || periodoRelatorio.equalsIgnoreCase("DIARIO")) {
-            pastaMes = new File(new File("").getAbsolutePath() + "/" + ano + "/" + mes);
-            verificarECriarPasta(pastaMes, mes);
-        } else {
-            File pasta = new File(pastaAno.getAbsolutePath());
-            for(int i = 1 ; i <= 12 ; i++){
-                File subpasta = new File(pasta.getAbsolutePath() + "/" + i);
-                File[] files = subpasta.listFiles();
-                if(files != null) {
-                    for (File file : files) {
-                        file.delete();
+        // Diário
+        if (comeco.until(fim).getDays() == 1) {
+
+            if (!pastaAno.exists()) { // Verifica se a pasta ano existe e se não existir a cria
+                pastaAno.mkdir();
+            }
+
+            File pastaMes = new File(pastaAno.getAbsolutePath() + "/" + comeco.getMonthValue());
+            if (!pastaMes.exists()) { // Verifica se a pasta mês existe e se não existir a cria
+                pastaMes.mkdir();
+            }
+
+            File arquivoDia = new File(pastaMes.getAbsolutePath() + "/" + comeco.getDayOfMonth() + "." + formatoArquivo);
+            if (arquivoDia.exists()) { // Verifica se o arquivo existe
+                if (sobrepor) { // Se for para sobrepor deleta o arquivo
+                    arquivoDia.delete();
+                } else { // Se não for para sobrepor aumenta o contador e muda o nome do arquivo
+                    int contador = 1;
+                    while (arquivoDia.exists()) {
+                        arquivoDia = new File(pastaMes.getAbsolutePath() + "/" + comeco.getDayOfMonth() + " (" + contador + ")" +"." + formatoArquivo);
+                        contador++;
                     }
                 }
-                subpasta.delete();
-                subpasta.mkdir();
             }
-        }
-    }
 
-    private static void verificarSobrepor() {
-        pastaAno = new File(new File("").getAbsolutePath() + "/" + ano);
-        if(periodoRelatorio.equalsIgnoreCase("MENSAL") || periodoRelatorio.equalsIgnoreCase("DIARIO")){
-            pastaMes = new File(pastaAno.getAbsolutePath() + "/" + mes);
-            if(pastaMes.exists()){
-                String opcaoSobrepor;
-                do{
-                    System.out.println("A pasta " + pastaMes.getAbsolutePath() + " já existe, deseja sobrepor? [S - Sim ; N - Não]");
-                    opcaoSobrepor = scanner.next();
-                    if(opcaoSobrepor.equalsIgnoreCase("s")){
-                        sobrepor = true;
-                    } else if(opcaoSobrepor.equalsIgnoreCase("n")) {
-                        sobrepor = false;
-                    }
-                } while (!opcaoSobrepor.equalsIgnoreCase("s") && !opcaoSobrepor.equalsIgnoreCase("n"));
-            }
-        } else {
-            if(pastaMes.exists()){
-                String opcaoSobrepor;
-                do{
-                    System.out.println("A pasta " + pastaMes.getAbsolutePath() + " já existe, deseja sobrepor? [S - Sim ; N - Não]");
-                    opcaoSobrepor = scanner.next();
-                    if(opcaoSobrepor.equalsIgnoreCase("s")){
-                        sobrepor = true;
-                    } else if(opcaoSobrepor.equalsIgnoreCase("n")) {
-                        sobrepor = false;
-                    }
-                } while (!opcaoSobrepor.equalsIgnoreCase("s") && !opcaoSobrepor.equalsIgnoreCase("n"));
-            }
+            pastasMes.add(pastaMes.getName());
+            nomeArquivo = arquivoDia.getAbsolutePath();
         }
-    }
 
-    private static void deletarPastaECriarNovamente(File pasta) {
-        if (!pasta.delete()) {
-            File[] files = pasta.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    file.delete();
+        // Mensal
+        else if (comeco.until(fim).getMonths() == 1) {
+
+            if (!pastaAno.exists()) { // Verifica se a pasta ano existe e se não existir a cria
+                pastaAno.mkdir();
+            }
+
+            File pastaMes = new File(pastaAno.getAbsolutePath() + "/" + comeco.getMonthValue());
+            if (pastaMes.exists()) { // Verifica se a pasta mês existe
+                if (sobrepor) { // Se for para sobrepor apaga os arquivos internos da pasta
+                    deletarArquivosInternos(pastaMes);
+                } else { // Se não for para sobrepor cria uma nova pasta com um contador na frente do nome
+                    int contador = 1;
+                    while (pastaMes.exists()) {
+                        pastaMes = new File(pastaMes.getAbsolutePath() + "/" + comeco.getDayOfMonth() + " (" + contador + ")");
+                    }
+                    pastaMes.mkdir();
                 }
-                pasta.delete();
-            }
-        }
-        pasta.mkdir();
-    }
-
-    private static boolean reutilizarPasta(File pasta, int mesOuAno) {
-        String opcaoReutilizar;
-        do {
-            System.out.println("Pasta referete a " + mesOuAno + " já existente como \"" + pasta.getPath() + "\", deseja reutilizar? (Todos os dados dentro da pasta serão apagados) [S - Sim ; N - Não]");
-            opcaoReutilizar = scanner.next();
-            if (opcaoReutilizar.equalsIgnoreCase("s")) {
-                return true;
-            } else if (opcaoReutilizar.equalsIgnoreCase("n")) {
-                return false;
             } else {
-                System.out.println("Valor selecionado inválido, favor digitar apenas a letra referente a opção desejada [S - Sim ; N - Não]");
+                pastaMes.mkdir();
             }
-        } while (!opcaoReutilizar.equalsIgnoreCase("s") && !opcaoReutilizar.equalsIgnoreCase("n"));
-        throw new RuntimeException("Erro");
+
+            File arquivoDia = new File(pastaMes.getAbsolutePath() + "/" + comeco.getDayOfMonth() +"." + formatoArquivo);
+
+            pastasMes.add(pastaMes.getName());
+            nomeArquivo = arquivoDia.getAbsolutePath();
+        }
+
+        // Anual
+        else if (comeco.until(fim).getYears() == 1) {
+            File pastaMes = new File("");
+            if (pastaAno.exists()) { // Verifica se a pasta ano existe
+                if (sobrepor) { // Se for para sobrepor apaga os arquivos internos da pasta
+                    for (int i = 1; i <= 12; i++) {
+                        pastaMes = new File(pastaAno + "/" + i);
+                        if (pastaMes.exists()) {
+                            deletarArquivosInternos(pastaMes);
+                        } else {
+                            pastaMes.mkdir();
+                        }
+                        pastasMes.add(pastaMes.getName());
+                    }
+                } else { // Se NÃO for para sobrepor cria uma nova pasta com um contador na frente do nome
+                    int contador = 1;
+                    while (pastaAno.exists()) {
+                        pastaAno = new File(pastaAno + " (" + contador + ")");
+                    }
+                    pastaAno.mkdir();
+                    for (int i = 1; i <= 12; i++) {
+                        pastaMes = new File(pastaAno + "/" + i);
+                        pastaMes.mkdir();
+                        pastasMes.add(pastaMes.getName());
+                    }
+                }
+            } else {
+                pastaAno.mkdir();
+                for (int i = 1; i <= 12; i++) {
+                    pastaMes = new File(pastaAno + "/" + i);
+                    pastaMes.mkdir();
+                    pastasMes.add(pastaMes.getName());
+                }
+            }
+
+            File arquivoDia = new File(pastaAno.getAbsolutePath() + "/" + pastasMes.get(0) + "/" + comeco.getDayOfMonth() +"." + formatoArquivo);
+
+            nomeArquivo = arquivoDia.getAbsolutePath();
+        }
+
+
+    }
+
+    private static void deletarArquivosInternos(File pasta) {
+        File[] files = pasta.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                file.delete();
+            }
+        }
+    }
+
+    private static Boolean verificarSobrepor() {
+        return MensagensBuilder.exibirMensagemDeSimOuNao("Deseja sobrepor qualquer pastas e arquivos existentes?");
     }
 
     public static Transacao gerarTransacao(LocalDate diaAtual, int numeroRegistro) {
@@ -325,6 +279,7 @@ public class Main {
     public static LocalDateTime gerarData(LocalDate diaAtual, int numeroRegistro) {
         Random random = new Random();
         int valor = random.nextInt(100);
+
         if (valor < 8 && numeroRegistro > 1) {
             return LocalDateTime.of(diaAtual, LocalTime.of(random.nextInt(23), random.nextInt(59), random.nextInt(59))).plusDays(random.nextInt(100));
         } else {
