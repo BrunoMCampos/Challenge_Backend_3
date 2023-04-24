@@ -30,24 +30,24 @@ public class UsuariosController {
         return "usuarios/cadastrar-usuario";
     }
 
-    @GetMapping("alterar/{id}")
-    public String formularioAlterarUsuario(DadosAlterarUsuario dados, Model model, @PathVariable Long id) {
+    @GetMapping("alterar/{email}")
+    public String formularioAlterarUsuario(DadosAlterarUsuario dados, Model model, @PathVariable String email) {
         model.addAttribute("telaAtiva", "usuarios");
-        Usuario usuario = usuarioRepository.getReferenceById(id);
-        dados = new DadosAlterarUsuario(usuario.getNome(), usuario.getEmail());
+        Usuario usuario = usuarioRepository.getReferenceByEmail(email);
+        dados = new DadosAlterarUsuario(usuario.getNome());
         model.addAttribute("dadosAlterarUsuario", dados);
-        model.addAttribute("id", id);
+        model.addAttribute("email", email);
         return "usuarios/alterar-usuario";
     }
 
-    @PutMapping("alterar/{id}")
+    @PutMapping("alterar/{email}")
     @Transactional
-    public String alterarUsuario(@Valid DadosAlterarUsuario dados, BindingResult result, Model model, @PathVariable Long id) {
+    public String alterarUsuario(@Valid DadosAlterarUsuario dados, BindingResult result, Model model, @PathVariable String email) {
         if (result.hasErrors()) {
             return "usuarios/alterar-usuario";
         }
         model.addAttribute("telaAtiva", "usuarios");
-        Usuario usuario = usuarioRepository.getReferenceById(id);
+        Usuario usuario = usuarioRepository.getReferenceByEmail(email);
         return usuarioService.alterar(usuario, dados, model, result);
     }
 
@@ -63,7 +63,7 @@ public class UsuariosController {
     @GetMapping("listar")
     public String listarUsuariosCadastrados(Model model) {
         model.addAttribute("telaAtiva", "usuarios");
-        List<DadosListarUsuarios> usuarios = usuarioService.listarTodos().stream().map(DadosListarUsuarios::new).toList();
+        List<DadosListarUsuarios> usuarios = usuarioService.listarTodosAtivos().stream().map(DadosListarUsuarios::new).toList();
         model.addAttribute("usuarios", usuarios);
         return "usuarios/listar-usuarios";
     }
@@ -77,10 +77,10 @@ public class UsuariosController {
         return "redirect:/formulario";
     }
 
-    @DeleteMapping("/remover/{id}")
+    @DeleteMapping("/remover/{email}")
     @Transactional
-    public String deletarUsuario(Model model, @PathVariable Long id) {
-        return usuarioService.deletar(id, model);
+    public String deletarUsuario(Model model, @PathVariable String email) {
+        return usuarioService.deletar(email, model);
     }
 
 }

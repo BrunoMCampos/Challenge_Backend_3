@@ -1,11 +1,11 @@
 package br.com.alura.transacoes.model.transacao;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 public record DataAnaliseTransacoes(
-        @NotNull
+        @Positive(message = "Favor selecionar um ano!")
         Integer ano,
-        @NotNull
+        @Positive(message = "Favor selecionar um mês!")
         Integer mes
 ) {
 }

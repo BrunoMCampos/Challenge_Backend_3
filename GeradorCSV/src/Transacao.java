@@ -33,4 +33,51 @@ public class Transacao {
                 this.valorTransacao + "," +
                 this.dataHoraTransacao;
     }
+
+    public String toXML() {
+        String XML = "  <transacao>\n";
+
+        XML = XML.concat("    <origem>\n");
+
+        XML = XML.concat("      <banco>");
+        XML = XML.concat(this.bancoOrigem);
+        XML = XML.concat("</banco>\n");
+
+        XML = XML.concat("      <agencia>");
+        XML = XML.concat(this.agenciaOrigem);
+        XML = XML.concat("</agencia>\n");
+
+        XML = XML.concat("      <conta>");
+        XML = XML.concat(this.contaOrigem);
+        XML = XML.concat("</conta>\n");
+
+        XML = XML.concat("    </origem>\n");
+
+        XML = XML.concat("    <destino>\n");
+
+        XML = XML.concat("      <banco>");
+        XML = XML.concat(this.bancoDestino);
+        XML = XML.concat("</banco>\n");
+
+        XML = XML.concat("      <agencia>");
+        XML = XML.concat(this.agenciaDestino);
+        XML = XML.concat("</agencia>\n");
+
+        XML = XML.concat("      <conta>");
+        XML = XML.concat(this.contaDestino);
+        XML = XML.concat("</conta>\n");
+
+        XML = XML.concat("    </destino>\n");
+
+        XML = XML.concat("    <valor>");
+        XML = XML.concat(this.valorTransacao.toPlainString());
+        XML = XML.concat("</valor>\n");
+
+        XML = XML.concat("    <data>");
+        XML = XML.concat(this.dataHoraTransacao.toString());
+        XML = XML.concat("</data>\n");
+
+        XML = XML.concat("  </transacao>");
+        return XML;
+    }
 }
