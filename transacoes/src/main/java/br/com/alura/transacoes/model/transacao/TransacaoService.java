@@ -3,16 +3,21 @@ package br.com.alura.transacoes.model.transacao;
 import br.com.alura.transacoes.model.importacao.Importacao;
 import br.com.alura.transacoes.model.importacao.ImportacaoRepository;
 import br.com.alura.transacoes.model.usuario.Usuario;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -28,52 +33,113 @@ public class TransacaoService {
 
     private LocalDate dataPrimeiraTransacao;
 
-    private static List<Transacao> extrairTransacoes(MultipartFile arquivo) throws IOException {
-        Scanner scanner = new Scanner(arquivo.getInputStream());
+    private static List<Transacao> extrairTransacoes(MultipartFile arquivo, BindingResult result) throws IOException {
+        String nomeArquivo = arquivo.getOriginalFilename();
+        if(arquivo.getSize() <= 0){
+            result.rejectValue("arquivos", "404", "Arquivo CSV/XML vazio!");
+        }
+        else if (nomeArquivo != null && nomeArquivo.length() >= 3) {
+            String extensao = nomeArquivo.substring(nomeArquivo.length() - 3);
+            if (extensao.equalsIgnoreCase("xml")) {
+                return extrairDeXML(arquivo);
+            } else if (extensao.equalsIgnoreCase("txt") || extensao.equalsIgnoreCase("csv")) {
+                return extrairDeCSV(arquivo);
+            }
+            result.rejectValue("arquivos", "415", "Formato de arquivo não suportado! (" + nomeArquivo + ")");
+        }
+        return new ArrayList<>();
+    }
+
+    private static List<Transacao> extrairDeXML(MultipartFile arquivo) throws IOException {
+        XmlMapper mapper = new XmlMapper();
+        mapper.registerModule(new JavaTimeModule());
+        return mapper.readValue(arquivo.getInputStream(), new TypeReference<List<TransacaoXML>>() {
+        }).stream().map(Transacao::new).toList();
+    }
+
+    private static List<Transacao> extrairDeCSV(MultipartFile arquivo) throws IOException {
         List<Transacao> transacoes = new ArrayList<>();
+
+        Scanner scanner = new Scanner(arquivo.getInputStream());
+
+        boolean linhaSemValoresNulos = true;
 
         while (scanner.hasNextLine()) {
             String linha = scanner.nextLine();
             String[] valoresLinha = linha.split(",");
-            Transacao transacao = new Transacao(valoresLinha);
-            transacoes.add(transacao);
+            if (valoresLinha.length == 8) {
+                for(int i = 0 ; i < 8 ; i++){
+                    if(valoresLinha[i].isBlank()){
+                        linhaSemValoresNulos = false;
+                    }
+                }
+                if(linhaSemValoresNulos){
+                    Transacao transacao = new Transacao(valoresLinha);
+                    transacoes.add(transacao);
+                }
+            }
+            linhaSemValoresNulos = true;
         }
+
         return transacoes;
     }
 
-    public void importar(MultipartFile arquivo, Model model) throws IOException {
-        List<Transacao> transacoes = extrairTransacoes(arquivo);
-        List<Transacao> transacoesValidas = validarTransacoes(transacoes, model);
-
-        if (transacoesValidas != null) {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            Usuario usuario = (Usuario) auth.getPrincipal();
-            importacaoRepository.save(new Importacao(this.dataPrimeiraTransacao, LocalDateTime.now(), usuario));
-
-            transacoesValidas.forEach(transacao -> {
-                transacaoRepository.save(transacao);
-            });
-
-            String mensagem;
-            if (transacoesValidas.size() > 1) {
-                mensagem = transacoesValidas.size() + " transações cadastradas com sucesso!";
-            } else {
-                mensagem = transacoesValidas.size() + " transação cadastrada com sucesso!";
+    public void importar(ArquivosImportados arquivos, BindingResult result, Model model) throws IOException {
+        dataPrimeiraTransacao = null;
+        int transacoesRealizadas = 0;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Usuario usuario = (Usuario) auth.getPrincipal();
+        String mensagem;
+        List<Importacao> importacoesParaCadastrar = new ArrayList<>();
+        List<Transacao> transacoesParaCadastrar = new ArrayList<>();
+        for (MultipartFile arquivo : arquivos.arquivos()) {
+            List<Transacao> transacoes = extrairTransacoes(arquivo, result);
+            List<Transacao> transacoesValidas = validarTransacoes(transacoes, result);
+            if (transacoesValidas != null && transacoesValidas.size() > 0) {
+                transacoesParaCadastrar.addAll(transacoesValidas);
+                importacoesParaCadastrar.add(new Importacao(this.dataPrimeiraTransacao, LocalDateTime.now(), usuario));
             }
-            model.addAttribute("mensagemCadastro", mensagem);
         }
+        if (transacoesParaCadastrar.size() > 0) {
+            System.out.println(transacoesParaCadastrar);
+            importacaoRepository.saveAll(importacoesParaCadastrar);
+            transacaoRepository.saveAll(transacoesParaCadastrar);
+            transacoesRealizadas += transacoesParaCadastrar.size();
+        }
+        if (transacoesRealizadas > 1) {
+            mensagem = transacoesRealizadas + " transações cadastradas com sucesso!";
+        } else if (transacoesRealizadas == 1) {
+            mensagem = transacoesRealizadas + " transação cadastrada com sucesso!";
+        } else {
+            mensagem = null;
+            result.rejectValue("arquivos", "404", "Arquivo CSV/XML vazio!");
+        }
+        model.addAttribute("mensagemCadastro", mensagem);
     }
 
-    private List<Transacao> validarTransacoes(List<Transacao> transacoes, Model model) {
+    private List<Transacao> validarTransacoes(List<Transacao> transacoes, BindingResult result) {
         if (transacoes.size() == 0) { //Verificar transações em branco
-            model.addAttribute("mensagemErro", "Arquivo CSV vazio!");
+            result.rejectValue("arquivos", "404", "Arquivo CSV/XML vazio!");
             return null;
         }
 
-        this.dataPrimeiraTransacao = transacoes.get(0).getDataHoraTransacao().toLocalDate(); // Ler primeira transação e determinar a data aceita para este arquivo
+        int i = 0;
+        while(dataPrimeiraTransacao == null && i < transacoes.size()){
+            if(transacoes.get(i).getDataHoraTransacao() != null){
+                this.dataPrimeiraTransacao = transacoes.get(i).getDataHoraTransacao().toLocalDate(); // Ler primeira transação e determinar a data aceita para este arquivo
+            }
+            i++;
+            if(transacoes.size() == i && dataPrimeiraTransacao == null){
+                result.rejectValue("arquivos", "404", "Arquivo CSV/XML vazio!");
+                return null;
+            }
+        }
         List<Transacao> dataCadastrada = transacaoRepository.findByData(dataPrimeiraTransacao); // Com base na data verificar se as transações deste dia já não foram registradas
         if (dataCadastrada != null && dataCadastrada.size() > 0) {
-            model.addAttribute("mensagemErro", "As transações desta data já foram importadas!");
+            result.rejectValue(
+                    "arquivos",
+                    "400",
+                    "As transações do dia: " + dataPrimeiraTransacao.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " já foram importadas!");
             return null;
         }
 
@@ -93,29 +159,29 @@ public class TransacaoService {
         if (transacao.getValorTransacao() == null) {
             return true;
         }
-        if (transacao.getContaOrigem() == null || transacao.getContaOrigem() == "") {
+        if (transacao.getContaOrigem().getConta() == null || transacao.getContaOrigem().getConta().isBlank()) {
             return true;
         }
-        if (transacao.getBancoOrigem() == null || transacao.getBancoOrigem() == "") {
+        if (transacao.getContaOrigem().getBanco() == null || transacao.getContaOrigem().getBanco().isBlank()) {
             return true;
         }
-        if (transacao.getAgenciaOrigem() == null || transacao.getAgenciaOrigem() == "") {
+        if (transacao.getContaOrigem().getAgencia() == null || transacao.getContaOrigem().getAgencia().isBlank()) {
             return true;
         }
-        if (transacao.getContaDestino() == null || transacao.getContaDestino() == "") {
+        if (transacao.getContaDestino().getConta() == null || transacao.getContaDestino().getConta().isBlank()) {
             return true;
         }
-        if (transacao.getAgenciaDestino() == null || transacao.getAgenciaDestino() == "") {
+        if (transacao.getContaDestino().getAgencia() == null || transacao.getContaDestino().getAgencia().isBlank()) {
             return true;
         }
-        if (transacao.getBancoDestino() == null || transacao.getBancoDestino() == "") {
+        if (transacao.getContaDestino().getBanco() == null || transacao.getContaDestino().getBanco().isBlank()) {
             return true;
         }
         return false;
     }
 
     private boolean datasSaoIguais(LocalDateTime dataTransacao) {
-        if (dataTransacao.getYear() == this.dataPrimeiraTransacao.getYear() &&
+        if (dataTransacao != null && dataTransacao.getYear() == this.dataPrimeiraTransacao.getYear() &&
                 dataTransacao.getMonthValue() == this.dataPrimeiraTransacao.getMonthValue() &&
                 dataTransacao.getDayOfMonth() == this.dataPrimeiraTransacao.getDayOfMonth()) {
             return true;
@@ -125,5 +191,33 @@ public class TransacaoService {
 
     public List<DadosListarTransacoes> listarPorData(LocalDate dataTransacoes) {
         return transacaoRepository.findByData(dataTransacoes).stream().map(DadosListarTransacoes::new).toList();
+    }
+
+    public List<Integer> listarAnosComImportacoes() {
+        return transacaoRepository.listarAnos();
+    }
+
+    public List<Transacao> listarTransacoesSuspeitas(Integer ano, Integer mes) {
+        return transacaoRepository.listarTransacoesSuspeitasNaData(ano, mes);
+    }
+
+    public List<DadosContasSuspeitas> listarContasSuspeitas(Integer ano, Integer mes) {
+        List<DadosContasSuspeitas> contasDestino = transacaoRepository.listarContasSuspeitasNaDataPorDestino(ano, mes);
+        List<DadosContasSuspeitas> contasOrigem = transacaoRepository.listarContasSuspeitasNaDataPorOrigem(ano, mes);
+
+        List<DadosContasSuspeitas> contasSuspeitas = new ArrayList<>(contasDestino.stream().toList());
+        contasSuspeitas.addAll(contasOrigem.stream().toList());
+
+        return contasSuspeitas;
+    }
+
+    public List<DadosAgenciasSuspeitas> listarAgenciasSuspeitas(Integer ano, Integer mes) {
+        List<DadosAgenciasSuspeitas> agenciasDestino = transacaoRepository.listarAgenciasSuspeitasNaDataPorDestino(ano, mes);
+        List<DadosAgenciasSuspeitas> agenciasOrigem = transacaoRepository.listarAgenciasSuspeitasNaDataPorOrigem(ano, mes);
+
+        List<DadosAgenciasSuspeitas> agenciasSuspeitas = new ArrayList<>(agenciasOrigem.stream().toList());
+        agenciasSuspeitas.addAll(agenciasDestino.stream().toList());
+
+        return agenciasSuspeitas;
     }
 }

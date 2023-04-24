@@ -1,23 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8"/>
-    <meta
-            name="viewport"
-            content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
-    />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title>Formulário para Importar Transações</title>
-
-    <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-            integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ"
-            crossorigin="anonymous"
-    />
+<head th:replace="~{fragmentos/pagina-base :: head('Formulário para Upload Transações Financeiras')}">
 </head>
 <body>
-<nav th:replace="~{fragmentos/navbar :: nav}"></nav>
+<nav th:replace="~{fragmentos/pagina-base :: nav('importacoes')}"></nav>
+<div th:replace="~{fragmentos/pagina-base :: modal-carregando}"></div>
 <div class="container">
     <h1 class="fw-bold text-uppercase text-center">
         Importar transações
@@ -25,6 +12,7 @@
     <form
             th:action="@{/transacoes/formulario}"
             th:method="post"
+            th:object="${arquivosImportados}"
             class="needs-validation"
             enctype="multipart/form-data"
             novalidate
@@ -32,25 +20,21 @@
     >
         <div class="mb-3">
             <input
+                    th:field="*{arquivos}"
+                    th:errorclass="is-invalid"
                     class="form-control"
                     type="file"
-                    id="arquivo"
-                    name="arquivo"
                     multiple
                     aria-labelledby="instrucaoSelecionarArquivo"
                     required
             />
-            <span th:text="${mensagemErro}" class="invalid-feedback"
-            >teste</span
-            >
-            <small th:text="${mensagemCadastro}" class="text-success"
-            >teste</small
-            >
+            <span th:errors="*{arquivos}" class="invalid-feedback">Erros ao cadastrar!</span>
+            <small th:text="${mensagemCadastro}" class="text-success">Sucesos no cadastro!</small>
             <div class="form-text" id="instrucaoSelecionarArquivo">
-                Selecione o arquivo para realizar o upload.
+                Selecione o(s) arquivo(s) para realizar o upload. (Máximo 4 MB)
             </div>
         </div>
-        <input class="btn btn-primary" type="submit" value="Importar"/>
+        <input class="btn btn-primary" type="submit" value="Importar" data-bs-toggle="modal" data-bs-target="#modal"/>
     </form>
     <h2 class="fw-bold text-uppercase text-center">
         Importações realizadas
@@ -81,7 +65,7 @@
             </td>
             <td>
                 <a th:href="@{/transacoes/detalhes/{data}(data=${importacao.dataTransacoes})}">
-                    <button type="button" class="btn btn-primary">Detalhes</button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal">Detalhes</button>
                 </a>
             </td>
         </tr>

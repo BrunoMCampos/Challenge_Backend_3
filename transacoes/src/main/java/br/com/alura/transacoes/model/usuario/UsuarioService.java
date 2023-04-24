@@ -30,14 +30,14 @@ public class UsuarioService {
         Optional<Usuario> optionalUsuario = usuarioRepository.findByEmail(dados.email()); // Verificar se e-mail já não está em uso
         if (optionalUsuario.isPresent()) {
             result.rejectValue("email", "400", "E-mail já cadastrado, por favor entre com outro endereço de e-mail!");
-            return "cadastrar-usuario";
+            return "usuarios/cadastrar-usuario";
         }
         String senha = gerarSenha(); // Gerar senha aleatória
         usuarioRepository.save(new Usuario(dados, encoder.encode(senha))); // Realizar o cadastrado criptografando a senha
         enviarSenhaPorEmail(senha, dados.email()); // Realiza o envio do e-mail contendo a senha aleatória para o email cadastrado
         model.addAttribute("mensagem", "Cadastro efetuado com sucesso! \n Acesse o email cadastrado para recuperar sua senha de acesso.");
-        model.addAttribute("usuarios",this.listarTodos());
-        return "listar-usuarios";
+        model.addAttribute("usuarios",this.listarTodosAtivos());
+        return "usuarios/listar-usuarios";
     }
 
     private String gerarSenha() { // Gera senha aleatória de 6 números
@@ -60,43 +60,35 @@ public class UsuarioService {
         envioEmail.send(mensagem);
     }
 
-    public List<Usuario> listarTodos() {
+    public List<Usuario> listarTodosAtivos() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Usuario usuario = (Usuario) auth.getPrincipal();
-        return usuarioRepository.listarUsuariosMenosAdminEProprio(usuario.getEmail());
+        return usuarioRepository.listarUsuariosAtivosMenosAdminEProprio(usuario.getEmail());
     }
 
     public String alterar(Usuario usuario, DadosAlterarUsuario dados, Model model, BindingResult result) {
-        if (!dados.email().equals(usuario.getEmail())) {
-            Optional<Usuario> optionalUsuario = usuarioRepository.findByEmail(dados.email());
-            if (optionalUsuario.isPresent()) {
-                result.rejectValue("email", "400", "E-mail já cadastrado, por favor entre com outro endereço de e-mail!");
-                return "alterar-usuario";
-            }
-            usuario.setEmail(dados.email());
-        }
         if (!dados.nome().equals(usuario.getNome())) {
             usuario.setNome(dados.nome());
         }
         model.addAttribute("mensagem", "Dados alterados com sucesso!");
-        List<DadosListarUsuarios> usuarios = this.listarTodos().stream().map(DadosListarUsuarios::new).toList();
+        List<DadosListarUsuarios> usuarios = this.listarTodosAtivos().stream().map(DadosListarUsuarios::new).toList();
         model.addAttribute("usuarios", usuarios);
-        return "listar-usuarios";
+        return "usuarios/listar-usuarios";
     }
 
-    public String deletar(Long id, Model model) {
-        Optional<Usuario> optionalUsuario = usuarioRepository.findById(id);
+    public String deletar(String email, Model model) {
+        Optional<Usuario> optionalUsuario = usuarioRepository.findByEmail(email);
         if (optionalUsuario.isEmpty()) {
             model.addAttribute("erro", "Usuario não encontrado!");
-            List<Usuario> usuarios = this.listarTodos();
+            List<Usuario> usuarios = this.listarTodosAtivos();
             model.addAttribute("usuarios", usuarios);
-            return "listar-usuarios";
+            return "usuarios/listar-usuarios";
         }
         Usuario usuario = optionalUsuario.get();
         usuario.setAtivo(false);
-        List<Usuario> usuarios = this.listarTodos();
+        List<Usuario> usuarios = this.listarTodosAtivos();
         model.addAttribute("usuarios", usuarios);
         model.addAttribute("mensagem", "Usuário deletado com sucesso!");
-        return "listar-usuarios";
+        return "usuarios/listar-usuarios";
     }
 }
