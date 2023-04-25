@@ -135,15 +135,72 @@ Como meus dados de login seriam diferentes do padrão do Spring Security utilize
 ---
 
 ### 📆 Semanas 3 e 4
+Nas semanas três e quatro fomos expostos a principal tarefa do projeto, a criação da funcionalidade de analise de transações. Para a criação desta funcionalidade fomos orientados como seriam as regras para uma transação, uma conta e uma agência serem consideradas suspeitas, além de como deveriamos desenvolver uma interface visual para permitir que os usuários recebessem as informações e as pudessem utilizar.
 
+```
+  Transação Suspeita: Valor da transação maior do que 100.000 reais.
+  Conta Suspeita: Valor total das transações no mês maior do que 1.000.000 de reais, seja para entradas ou saídas.
+  Agência Suspeita: Valor total das transaçõs no mês maior do que 1.000.000.000 de reais, seja para entradas ou saídas.
+```
+
+Além desta funcionalidade, recebemos a tarefa de modificar a estrutura do nosso código, permitindo agora que fosse possível também o recebimento de informações via XML, além dos arquivos CSV já aceitos.
+
+Por fim deveriamos realizar o deploy e a documentação da aplicação aqui no GitHub.
 
 #### 🔨 Forma de elaboração
+O primeiro passo para a elaboração das tarefas desta semana foram a criação da nova tela para a visualização das transações, contas e agências suspeitas, que seguiu o mesmo padrão das telas anteriores, com Bootstrap e Thymeleaf:
+![image](https://user-images.githubusercontent.com/100006703/234353227-e5e958b0-57d8-4c94-b6f8-58a9be8f55c3.png)
 
+Nesta tela já foram inseridas as devidas validações para solicitações com dados inválidos ou ausentes, como demonstrado a seguir:
 
-##### Documentação
+* Caso nenhum registro seja encontrado as tabelas apresentarão uma mensagem de "Não existem transações/contas/agências suspeitas para a data selecionada!":
+![image](https://user-images.githubusercontent.com/100006703/234353506-ec47f3df-2b2a-445e-916e-2c283b01ac5e.png)
 
+* Caso não seja selecionado o mês ou o ano uma mensagem de alerta será exibida embaixo da caixa de seleção para informar o usuário da obrigatoriedade dos dados:
+![image](https://user-images.githubusercontent.com/100006703/234353932-ff1ad036-e3b0-454f-9c9a-fefe10f79d62.png)
+![image](https://user-images.githubusercontent.com/100006703/234353986-1526816e-b7a0-4989-a11b-d019cedcca65.png)
+![image](https://user-images.githubusercontent.com/100006703/234354031-cc8a4b90-2488-48de-ba5c-9af3b437408e.png)
+
+E caso seja encontrado algum registro este é exibido na tabela correspondente:
+![image](https://user-images.githubusercontent.com/100006703/234354634-d90af7af-fa28-47e6-8473-2887f3883922.png)
+
+Para alimentação destas tabelas foi criada a classe ```AnaliseTransacoesService``` que na realidade apenas chama alguns métodos novos que foram criados da classe ```TransacaoService``` para a elaboração do relatório:
+![image](https://user-images.githubusercontent.com/100006703/234355025-29b97727-a11a-4535-82e9-9b7571930bfc.png)
+![image](https://user-images.githubusercontent.com/100006703/234355216-581980a2-dfeb-4e63-91fe-6468def86a50.png)
+
+Após a criação desta funcionalidade foi alterada a classe ```TransacaoService``` para permitir o upload de arquivos XML utilizando a biblioteca ```Jackson```:
+![image](https://user-images.githubusercontent.com/100006703/234355504-df62b49c-344d-4fd8-8bed-8b5ce939e8b5.png)
+![image](https://user-images.githubusercontent.com/100006703/234355554-0f48a9de-ff5b-481b-bc2c-a371698118c3.png)
+
+Arquivos XML foram organizados de forma que a classe ```Transacao``` conter uma classe interna chamada ```Conta```, por este motivo uma classe ```Conta``` foi criada e integrada a classe ```Transacao``` e, para manter o padrão DTO, foi criada um novo record chamado ```TransacaoXML``` para tratar os dados enviados como XML:
+![image](https://user-images.githubusercontent.com/100006703/234356034-69a05122-65de-4eb4-be85-585a001cb9c7.png)
+![image](https://user-images.githubusercontent.com/100006703/234356127-872da006-23fc-432d-b19b-6e177a0923f6.png)
+![image](https://user-images.githubusercontent.com/100006703/234356218-75485022-fdbd-440f-82e2-108f7901bc69.png)
+
+Assim como também foram criados Records para o recebimento do ano e mês referente a geração do relatório e para envio dos dados para as tabelas, visando impedir que dados além do necessário fossem enviados:
+![image](https://user-images.githubusercontent.com/100006703/234356566-9d5987db-3ee4-4a95-97f4-37d4183d7990.png)
+![image](https://user-images.githubusercontent.com/100006703/234356660-5a54510b-3655-465c-82d2-03210fb8ae54.png)
+![image](https://user-images.githubusercontent.com/100006703/234356700-bc7a2b3a-8a2f-45b8-a8ce-24f636261573.png)
+
+Por fim foram desenvolvidos testes automatizados que visavam principalmente os endpoints da aplicação, focando em testas as classes Service e na validação dos dados. Foi optado por um teste diretamente nos Controllers por conta do uso da classe ```BindingResults``` nas classes Service, exigindo uma solicitação http para serem criados pelo Spring.
+
+Durante a elaboração e execução das tarefas destas duas semanas e geração dos testes automatizados uma série de bugs foram encontrados e resolvidos, tais como:
+
+* Erro ao enviar arquivos com datas ou valores em branco, quebrando a aplicação e levando o usuário a uma página de erro que não explicitava a causa do problema;
+* Erro ao gravar um número muito grande de transações de uma só vez, gerando uma demora de até 5 minutos para registro de todas as transações no banco de dados, tempo que foi reduzido para cerca de 10 a 20 segundos;
+* Necessidade de um retorno visual para permitir ao usuário entender que os dados estavam sendo processados, o que foi feito com o spinner do Bootstrap;
+
+Por fim também fiquei bem incomodado com uma segunda aplicação JAVA simples que criei para ser utilizada durante o projeto, algo que está aqui junto com a aplicação MVC que é o "GeradorCSV". Criei esta aplicação para gerar CSVs aleatórios para um dia específico para poder testar manualmente o projeto conforme o desenvolvia, porém, conforme o projeto foi crescendo vi a necessidade de alterar esta aplicação, então a modifiquei para criar também arquivos XML.
+Abaixo irei deixar um pequeno video demonstrando o seu funcionamento (utilizei o clideo para reduzir o tamanho do vídeo):
+
+[Vídeo Gerador de CSV](https://user-images.githubusercontent.com/100006703/234367767-202a7303-f28d-437d-9760-baf432b91fd7.mp4)
 
 
 #### 📜 Tarefas das Semanas 3 e 4
-- [x] 
+- [x] Criação da nova tela para analise de transações;
+- [x] Geração do relatório de transações, contas e agências suspeitas;
+- [x] Alteração do código para aceitar arquivos XML;
+- [x] Deploy em cloud;
+- [x] Documentação no Github;
+- [x] Criação de aplicação java simples para geração de arquivos XML e CSV. [EXTRA!]
 ---
