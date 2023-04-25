@@ -205,6 +205,8 @@ Durante a elaboração e execução das tarefas destas duas semanas e geração 
 * Erro ao gravar um número muito grande de transações de uma só vez, gerando uma demora de até 5 minutos para registro de todas as transações no banco de dados, tempo que foi reduzido para cerca de 10 a 20 segundos;
 * Necessidade de um retorno visual para permitir ao usuário entender que os dados estavam sendo processados, o que foi feito com o spinner do Bootstrap;
 
+Também realizei o deploy da aplicação em ambiente cloud no Google Cloud, utilizando uma máquina virtual onde criei o banco de dados e efetuei o upload do arquivo jar, deixando rodando por meio do comando nohup.
+
 Por fim também fiquei bem incomodado com uma segunda aplicação JAVA simples que criei para ser utilizada durante o projeto, algo que está aqui junto com a aplicação MVC que é o "GeradorCSV". Criei esta aplicação para gerar CSVs aleatórios para um dia específico para poder testar manualmente o projeto conforme o desenvolvia, porém, conforme o projeto foi crescendo vi a necessidade de alterar esta aplicação, então a modifiquei para criar também arquivos XML.
 Abaixo irei deixar um pequeno video demonstrando o seu funcionamento (utilizei o clideo para reduzir o tamanho do vídeo):
 
