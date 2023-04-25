@@ -18,6 +18,21 @@ Projeto criado durante um evento da escola online de tecnologia [Alura](https://
 
 ---
 
+## Acesso ao projeto
+
+A aplicação MVC pode ser acessada por meio do IP
+```
+  http://34.151.195.83:8090
+```
+
+O acesso pode ser realizado por meio do login padrão:
+```
+  login: admin@email.com.br
+  senha: 123999
+```
+
+---
+
 ### 📆 Semana 1
 Nesta primeira semana as tarefas foram referentes a criação do projeto, do banco de dados e do formulário para realização do upload de arquivos CSV. Como em todos os demais desafios a Alura disponibiliza diversos cursos para nos aperfeiçoarmos em diferentes linguagens, tudo dentro da própria plataforma, e também sanarmos algumas duvidas que possamos ter, e nos da total liberdade de escolhermos como iremos trabalhar durante esse projeto, escolhendo linguagens, plataformas, etc.
 
